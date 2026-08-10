@@ -385,7 +385,37 @@ CONTAINER ID   IMAGE   COMMAND   CREATED   STATUS   PORTS   NAMES
 | `docker rm <name>` | 컨테이너 삭제 |
 | `docker rm <id1> <id2>` | 여러 컨테이너 동시 삭제 |
 
-## 6) 컨테이너 실행 (포트 매핑)
+## 6) 커스텀 NGINX 이미지 제작
+
+### 선택 방식
+- **(A) 웹 서버 베이스 이미지 활용**
+- 베이스 이미지: `nginx:alpine`
+
+### 커스텀 포인트
+| 항목 | 목적 |
+|------|------|
+| `default.conf` 교체 | `/health` 엔드포인트 추가, 커스텀 설정 적용 |
+| `index.html` 교체 | 기본 NGINX 페이지 대신 커스텀 페이지 제공 |
+
+### 빌드 및 실행 명령
+```bash
+# 이미지 빌드
+docker build -t custom-nginx .
+
+# 컨테이너 실행 (포트 매핑: 로컬 8080 → 컨테이너 80)
+docker run -d -p 8080:80 --name my-nginx custom-nginx
+```
+
+### 핵심 결과
+- 이미지 빌드 성공: 62.4MB
+- 컨테이너 실행 성공
+
+### 포트 매핑 및 접속 확인
+- 접속 주소: `http://localhost:8080`
+- 헬스체크: `http://localhost:8080/health` → `healthy` 응답
+
+### 접속 화면
+
 ## 7) 볼륨 / 바인드 마운트
 ## 8) attach vs exec 관찰
 ## 9) 트러블슈팅
