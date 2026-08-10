@@ -185,6 +185,206 @@ CONTAINER ID   IMAGE         COMMAND    STATUS                    NAMES
 - 컨테이너는 종료되어도 `docker ps -a`에 기록으로 남는다.
 
 ## 5) 컨테이너 실행 실습
+
+### 5.1 ubuntu 이미지 pull
+
+```bash
+docker pull ubuntu
+```
+
+```
+Using default tag: latest
+latest: Pulling from library/ubuntu
+Digest: sha256:...
+Status: Downloaded newer image for ubuntu:latest
+docker.io/library/ubuntu:latest
+```
+
+### 5.2 이미지 확인
+
+```bash
+docker images
+```
+
+```
+REPOSITORY    TAG       IMAGE ID       CREATED       SIZE
+ubuntu        latest    a04dc4851cbc   2 weeks ago   78.1MB
+hello-world   latest    ...            ...           ...
+```
+
+### 5.3 대화형 컨테이너 실행 (-it)
+
+```bash
+docker run -it ubuntu /bin/bash
+```
+
+- `-i` : 표준 입력 유지 (interactive)
+- `-t` : 터미널 할당 (tty)
+- 컨테이너 내부 진입 후 아래 명령 실행
+
+#### 컨테이너 내부 실습
+
+```bash
+cat /etc/os-release
+```
+
+```
+PRETTY_NAME="Ubuntu 24.04.2 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.2 LTS (Noble Numbat)"
+```
+
+```bash
+whoami
+```
+
+```
+root
+```
+
+```bash
+ps aux
+```
+
+```
+USER   PID %CPU %MEM  COMMAND
+root     1  0.0  0.0  /bin/bash
+root    10  0.0  0.0  ps aux
+```
+
+```bash
+exit
+```
+
+#### ⚠️ 문제 발생
+
+```bash
+docker ps
+```
+
+```
+CONTAINER ID   IMAGE   COMMAND   CREATED   STATUS    PORTS   NAMES
+```
+
+> `exit` 시 bash(PID 1)가 종료되면서 컨테이너 자체가 종료됨
+
+### 5.4 백그라운드 컨테이너 실행 (-d)
+
+```bash
+docker run -d --name myubuntu ubuntu sleep infinity
+```
+
+- `-d` : 백그라운드(detached) 실행
+- `--name myubuntu` : 컨테이너 이름 지정
+- `sleep infinity` : 컨테이너가 종료되지 않도록 유지
+
+```bash
+docker ps
+```
+
+```
+CONTAINER ID   IMAGE    COMMAND            STATUS          NAMES
+fcaafb233892   ubuntu   "sleep infinity"   Up 1 minute     myubuntu
+```
+
+> 컨테이너가 백그라운드에서 계속 실행 중!
+
+### 5.5 attach vs exec 비교
+
+#### attach 방식
+
+```bash
+docker attach myubuntu
+ps aux
+```
+
+```
+USER   PID %CPU %MEM  COMMAND
+root     1  0.0  0.0  /bin/bash
+root     7  0.0  0.0  ps aux
+```
+
+```bash
+exit
+```
+
+```bash
+docker ps
+```
+
+```
+CONTAINER ID   IMAGE   COMMAND   STATUS   NAMES
+```
+
+> bash가 PID 1이었기 때문에 exit 시 컨테이너 종료됨
+
+#### exec 방식
+
+```bash
+docker run -d --name myubuntu ubuntu sleep infinity
+docker exec -it myubuntu /bin/bash
+ps aux
+```
+
+```
+USER   PID %CPU %MEM  COMMAND
+root     1  0.0  0.0  sleep infinity
+root     7  0.8  0.0  /bin/bash
+root    14  0.0  0.0  ps aux
+```
+
+```bash
+exit
+```
+
+```bash
+docker ps
+```
+
+```
+CONTAINER ID   IMAGE    COMMAND            STATUS          NAMES
+fcaafb233892   ubuntu   "sleep infinity"   Up 1 minute     myubuntu
+```
+
+> bash를 종료해도 PID 1(sleep infinity)이 살아있어 컨테이너 유지됨!
+
+#### 📊 attach vs exec 최종 비교
+
+| 항목 | attach | exec |
+|------|--------|------|
+| 접속 방식 | 기존 PID 1 프로세스에 연결 | 새 프로세스 추가 실행 |
+| bash의 PID | 1 | 7 (새 프로세스) |
+| exit 후 컨테이너 | ❌ 종료됨 | ✅ 유지됨 |
+| 실무 사용 | ❌ 비권장 | ✅ 권장 |
+
+> 💡 **실무 팁:** 운영 중인 컨테이너 접속 시 항상 `docker exec -it` 사용!
+
+### 5.6 컨테이너 정리
+
+```bash
+docker stop myubuntu
+docker rm myubuntu
+docker rm aed34b3f1b18 b61811c76211
+docker ps -a
+```
+
+```
+CONTAINER ID   IMAGE   COMMAND   CREATED   STATUS   PORTS   NAMES
+```
+
+> 모든 컨테이너 정리 완료!
+
+#### 컨테이너 관리 명령어 정리
+
+| 명령어 | 설명 |
+|--------|------|
+| `docker ps` | 실행 중인 컨테이너 확인 |
+| `docker ps -a` | 전체 컨테이너 확인 (종료 포함) |
+| `docker stop <name>` | 컨테이너 중지 |
+| `docker rm <name>` | 컨테이너 삭제 |
+| `docker rm <id1> <id2>` | 여러 컨테이너 동시 삭제 |
+
 ## 6) 컨테이너 실행 (포트 매핑)
 ## 7) 볼륨 / 바인드 마운트
 ## 8) attach vs exec 관찰
