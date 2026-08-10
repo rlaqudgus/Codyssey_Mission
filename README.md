@@ -418,7 +418,7 @@ docker run -d -p 8080:80 --name my-nginx custom-nginx
 
 - 헬스체크: `http://localhost:8080/health` → `healthy` 응답
  
-<img width="856" height="205" alt="스크린샷 2026-08-10 오후 1 37 39" src="https://github.com/user-
+<img width="856" height="205" alt="스크린샷 2026-08-10 오후 1 37 39" src="https://github.com/user-attachments/assets/49d0874e-2bba-442b-ae07-27fe403c84b3" />
 
 ### 접속 화면
 
@@ -638,5 +638,4 @@ docker run -d -p 8080:80 --name my-nginx-container my-nginx
 **교훈**
 > 파일을 수정했다면 반드시 `docker build` → `docker run` 순서로 재실행해야 함.  
 > 컨테이너는 이미지의 **스냅샷**이므로 소스 변경이 자동 반영되지 않음.
-attachments/assets/49d0874e-2bba-442b-ae07-27fe403c84b3" />
 
