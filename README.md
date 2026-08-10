@@ -557,3 +557,78 @@ origin  https://github.com/rlaqudgus/Codyssey_Mission.git (push)
 ---
 
 ## 9) 트러블슈팅
+
+### TS-01. NGINX 컨테이너 접속 불가 (default.conf 설정 누락)
+
+**문제 상황**
+- `docker run -p 8080:80` 으로 컨테이너 실행 후 브라우저에서 `localhost:8080` 접속 시 응답 없음
+
+**원인**
+- `default.conf` 파일이 비어있어 NGINX가 어떤 요청도 처리하지 못함
+- `COPY default.conf /etc/nginx/conf.d/default.conf` 로 빈 파일이 그대로 컨테이너에 복사됨
+
+**해결 과정**
+
+```bash
+# 1. default.conf 내용 확인
+cat default.conf
+# → 아무것도 출력되지 않음 (빈 파일)
+
+# 2. 올바른 server 블록 작성
+cat > default.conf << 'EOF'
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+    }
+}
+EOF
+
+# 3. 이미지 재빌드
+docker build -t my-nginx .
+
+# 4. 컨테이너 재실행
+docker run -d -p 8080:80 my-nginx
+```
+
+**결과**
+- `localhost:8080` 접속 성공 ✅
+
+**교훈**
+> NGINX는 `default.conf`가 비어있으면 아무 요청도 처리하지 않음.  
+> `server { listen 80; ... }` 블록이 반드시 존재해야 함.
+
+---
+
+### TS-02. Docker 이미지 빌드 후 변경사항 미반영
+
+**문제 상황**
+- `index.html` 수정 후 브라우저 새로고침해도 이전 내용이 그대로 출력됨
+
+**원인**
+- 이미지를 재빌드하지 않고 기존 컨테이너를 그대로 실행 중이었음
+- Docker는 이미지를 기반으로 컨테이너를 생성하므로, 소스 변경 시 **반드시 재빌드 필요**
+
+**해결 과정**
+
+```bash
+# 1. 실행 중인 컨테이너 중지 및 삭제
+docker stop my-nginx-container
+docker rm my-nginx-container
+
+# 2. 이미지 재빌드
+docker build -t my-nginx .
+
+# 3. 컨테이너 재실행
+docker run -d -p 8080:80 --name my-nginx-container my-nginx
+```
+
+**결과**
+- 수정된 `index.html` 내용이 브라우저에 정상 반영 ✅
+
+**교훈**
+> 파일을 수정했다면 반드시 `docker build` → `docker run` 순서로 재실행해야 함.  
+> 컨테이너는 이미지의 **스냅샷**이므로 소스 변경이 자동 반영되지 않음.
