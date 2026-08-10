@@ -416,6 +416,144 @@ docker run -d -p 8080:80 --name my-nginx custom-nginx
 
 ### 접속 화면
 
-## 7) 볼륨 / 바인드 마운트
-## 8) attach vs exec 관찰
+## 7) Docker 볼륨 영속성 검증
+
+---
+
+### 7.1. 볼륨 생성
+
+```bash
+docker volume create my-volume
+```
+
+**출력:**
+```
+my-volume
+```
+
+---
+
+### 7.2. 볼륨 확인
+
+```bash
+docker volume ls
+```
+
+**출력:**
+```
+DRIVER    VOLUME NAME
+local     my-volume
+```
+
+---
+
+### 7.3. 컨테이너 생성 및 데이터 쓰기
+
+```bash
+docker run -it --name test-container -v my-volume:/data ubuntu
+```
+
+**컨테이너 내부:**
+```bash
+echo "hello volume" > /data/test.txt
+cat /data/test.txt
+```
+
+**출력:**
+```
+hello volume
+```
+
+---
+
+### 7.4. 컨테이너 삭제
+
+```bash
+docker rm test-container
+```
+
+**출력:**
+```
+test-container
+```
+
+---
+
+### 7.5. 호스트에서 데이터 접근 불가 확인
+
+```bash
+cat /data/test.txt
+```
+
+**출력:**
+```
+cat: /data/test.txt: No such file or directory
+```
+
+> 💡 데이터는 호스트가 아닌 **Docker 볼륨**에 저장되므로 호스트에서는 접근 불가
+
+---
+
+### 7.6. 새 컨테이너로 데이터 유지 확인 ✅
+
+```bash
+docker run -it --name test-container2 -v my-volume:/data ubuntu
+```
+
+**컨테이너 내부:**
+```bash
+cat /data/test.txt
+```
+
+**출력:**
+```
+hello volume
+```
+
+> ✅ **컨테이너 삭제 후에도 볼륨 데이터가 유지됨을 확인**
+
+---
+
+## 8) Git 설정
+
+### 8.1. Git 설정 확인
+
+```bash
+git config --list
+```
+
+**출력:**
+```
+credential.helper=osxkeychain
+core.repositoryformatversion=0
+core.filemode=true
+core.bare=false
+core.logallrefupdates=true
+core.ignorecase=true
+core.precomposeunicode=true
+remote.origin.url=https://github.com/rlaqudgus/Codyssey_Mission.git
+remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+branch.main.remote=origin
+branch.main.merge=refs/heads/main
+branch.main.vscode-merge-base=origin/main
+```
+
+---
+
+### 8.2. GitHub 연동 확인
+
+```bash
+git remote -v
+```
+
+**출력:**
+```
+origin  https://github.com/rlaqudgus/Codyssey_Mission.git (fetch)
+origin  https://github.com/rlaqudgus/Codyssey_Mission.git (push)
+```
+
+> ✅ **GitHub 저장소 연동 완료**
+
+---
+
 ## 9) 트러블슈팅
